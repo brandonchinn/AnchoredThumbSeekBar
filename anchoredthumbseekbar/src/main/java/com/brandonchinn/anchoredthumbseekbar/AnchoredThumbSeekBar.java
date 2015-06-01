@@ -24,17 +24,19 @@ import android.view.View;
 import android.widget.SeekBar;
 
 /**
- * Created by brandonchinn on 5/26/15.
+ * Created by Brandon Chinn on 5/26/15.
  */
 public class AnchoredThumbSeekBar extends View {
-    private static int MAX_LEVEL=10000;
+    private static final int MAX_LEVEL=10000;
+
+    private static final int DEFAULT_DRAWABLE_SIZE = 2;
+    private static final int DEFAULT_MAX_VALUE = 1000;
 
     private int barHeight;
     private int thumbWidth;
     private int maxValue;
     private int progress;
     private int barOffset;
-    private float animationPosition;
     private Drawable elapsedDrawable;
     private Drawable remainingDrawable;
     private Drawable thumbDrawable;
@@ -106,7 +108,7 @@ public class AnchoredThumbSeekBar extends View {
         remainingDrawable = a.getDrawable(R.styleable.AnchoredThumbSeekBar_remainingDrawable);
         thumbDrawable = a.getDrawable(R.styleable.AnchoredThumbSeekBar_thumbDrawable);
 
-        initializeProgressDrawables(barHeight);
+        initializeProgressDrawables();
 
         setMax(a.getInt(R.styleable.AnchoredThumbSeekBar_max, maxValue));
         setProgress(a.getInt(R.styleable.AnchoredThumbSeekBar_progress, progress), false);
@@ -146,33 +148,40 @@ public class AnchoredThumbSeekBar extends View {
         thumbDrawable.draw(c);
     }
 
+    private void initDefaultAttributes() {
+        final Resources r = getResources();
+        barHeight = thumbWidth = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_DRAWABLE_SIZE, r.getDisplayMetrics()));
+        maxValue = DEFAULT_MAX_VALUE;
+        progress = -1; //ensures that the initial draw happens
+        barOffset = 0;
+    }
 
-    private void initializeProgressDrawables(int barHeight) {
+    private void initializeProgressDrawables() {
         //elapsed portion of the drawable (left side)
         if (elapsedDrawable == null) {
             elapsedDrawable = new ShapeDrawable(getDrawableShape());
             ((ShapeDrawable)elapsedDrawable).getPaint().setColor(Color.WHITE);
         }
 
-        elapsedDrawable = tileify(elapsedDrawable, Gravity.RIGHT, true);
+        elapsedDrawable = tileify(elapsedDrawable, Gravity.END, true);
 
         if (remainingDrawable == null) {
             remainingDrawable = new ShapeDrawable(getDrawableShape());
-            ((ShapeDrawable)remainingDrawable).getPaint().setColor(Color.WHITE);
+            ((ShapeDrawable)remainingDrawable).getPaint().setColor(Color.LTGRAY);
         }
 
-        remainingDrawable = tileify(remainingDrawable, Gravity.LEFT, true);
+        remainingDrawable = tileify(remainingDrawable, Gravity.START, true);
 
         //Anchored seek thumb
         if (thumbDrawable == null) {
             thumbDrawable = new ShapeDrawable(getDrawableShape());
-            ((ShapeDrawable)thumbDrawable).getPaint().setColor(Color.WHITE);
+            ((ShapeDrawable)thumbDrawable).getPaint().setColor(Color.BLUE);
         }
 
-        thumbDrawable = tileify(thumbDrawable, Gravity.LEFT, false);
+        thumbDrawable = tileify(thumbDrawable, Gravity.NO_GRAVITY, false);
     }
 
-    private synchronized void doRefreshProgress(int progress, boolean fromUser) {
+    private synchronized void doRefreshProgress(final int progress, final boolean fromUser) {
         float scale = maxValue > 0 ? (1.0f*progress) / maxValue : 0;
         elapsedDrawable.setLevel(Math.min(Math.round(scale * MAX_LEVEL * 2), MAX_LEVEL));
         remainingDrawable.setLevel(Math.min(Math.round((1 - scale) * MAX_LEVEL * 2), MAX_LEVEL));
@@ -229,15 +238,6 @@ public class AnchoredThumbSeekBar extends View {
         return new RoundRectShape(roundedCorners, null, null);
     }
 
-    private void initDefaultAttributes() {
-        Resources r = getResources();
-        barHeight = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, r.getDisplayMetrics()));
-        thumbWidth = barHeight;
-        maxValue = 1000;
-        progress = -1;
-        barOffset = 0;
-    }
-
     /**
      * Converts a drawable to a tiled version of itself. It will recursively
      * traverse layer and state list drawables.
@@ -288,7 +288,7 @@ public class AnchoredThumbSeekBar extends View {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(final MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 setPressed(true);
