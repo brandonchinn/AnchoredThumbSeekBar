@@ -356,7 +356,7 @@ public class AnchoredThumbSeekBar extends View {
         final int width = getWidth() - getPaddingLeft() - getPaddingRight();
         final float x = event.getX();
         final int changed = Math.round(initialPosX - x);
-        int newProgress = currentProgress + (changed * Math.round(((1.0f * width) / maxValue)));
+        int newProgress = currentProgress + (changed * Math.round(maxValue / (1.0f * width)));
         newProgress = Math.max(newProgress, 0);
         newProgress = Math.min(newProgress, maxValue);
         setProgress(newProgress, true);
